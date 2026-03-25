@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+models/artifacts/*.pkl
+models/artifacts/*.csv
+
+# Node / Blockchain
+node_modules/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/deployment.json
+blockchain/.env
+frontend/dist/
+frontend/.env
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/pubspec.lock
+
+# Docker
+*.log
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Secrets — NEVER commit these
+*.pem
+*.key
+firebase-service-account.json

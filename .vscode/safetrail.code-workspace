@@ -1,0 +1,137 @@
+{
+  "folders": [
+    { "path": ".",          "name": "🛡️ SafeTrail Root" },
+    { "path": "backend",   "name": "⚡ Backend (FastAPI)" },
+    { "path": "blockchain","name": "🔗 Blockchain (Hardhat)" },
+    { "path": "mobile",    "name": "📱 Mobile (Flutter)" },
+    { "path": "frontend",  "name": "🖥️ Dashboard (React)" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "python.defaultInterpreterPath": "./backend/venv/bin/python",
+    "python.formatting.provider": "black",
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.tabSize": 4
+    },
+    "[dart]": {
+      "editor.defaultFormatter": "Dart-Code.dart-code",
+      "editor.tabSize": 2
+    },
+    "[solidity]": {
+      "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    },
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/node_modules": true,
+      "**/.dart_tool": true,
+      "**/build": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/venv": true,
+      "**/.dart_tool": true
+    },
+    "terminal.integrated.env.linux": {
+      "PYTHONPATH": "${workspaceFolder}/backend"
+    },
+    "terminal.integrated.env.osx": {
+      "PYTHONPATH": "${workspaceFolder}/backend"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-python.pylint",
+      "Dart-Code.flutter",
+      "Dart-Code.dart-code",
+      "NomicFoundation.hardhat-solidity",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-azuretools.vscode-docker",
+      "rangav.vscode-thunder-client",
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-pg",
+      "GraphQL.vscode-graphql"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🐍 Backend (FastAPI)",
+        "type": "python",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": ["main:app", "--reload", "--port", "8000"],
+        "cwd": "${workspaceFolder}/backend",
+        "env": { "PYTHONPATH": "${workspaceFolder}/backend" }
+      },
+      {
+        "name": "🔗 Mock APIs",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/mock_apis.py",
+        "cwd": "${workspaceFolder}/backend"
+      },
+      {
+        "name": "🤖 Train AI Models",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/services/ai/train.py",
+        "cwd": "${workspaceFolder}/backend"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "🚀 Full Stack (Backend + Mock APIs)",
+        "configurations": ["🐍 Backend (FastAPI)", "🔗 Mock APIs"]
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🐳 Docker: Start All Services",
+        "type": "shell",
+        "command": "docker-compose up -d postgres mongodb redis",
+        "group": "build",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🔗 Blockchain: Compile",
+        "type": "shell",
+        "command": "cd blockchain && npx hardhat compile",
+        "group": "build"
+      },
+      {
+        "label": "🔗 Blockchain: Test",
+        "type": "shell",
+        "command": "cd blockchain && npx hardhat test",
+        "group": "test"
+      },
+      {
+        "label": "🔗 Blockchain: Deploy (Mumbai)",
+        "type": "shell",
+        "command": "cd blockchain && npx hardhat run scripts/deploy.js --network mumbai",
+        "group": "build"
+      },
+      {
+        "label": "🤖 Train AI Models",
+        "type": "shell",
+        "command": "cd backend && python services/ai/train.py",
+        "group": "build"
+      },
+      {
+        "label": "📦 Install All Dependencies",
+        "type": "shell",
+        "command": "cd backend && pip install -r requirements.txt && cd ../blockchain && npm install && cd ../frontend && npm install",
+        "group": "build"
+      }
+    ]
+  }
+}

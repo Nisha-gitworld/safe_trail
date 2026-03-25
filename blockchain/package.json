@@ -1,0 +1,21 @@
+{
+  "name": "safetrail-blockchain",
+  "version": "1.0.0",
+  "description": "SafeTrail smart contracts — Polygon / Hardhat",
+  "scripts": {
+    "compile":  "hardhat compile",
+    "test":     "hardhat test",
+    "deploy:mumbai":  "hardhat run scripts/deploy.js --network mumbai",
+    "deploy:local":   "hardhat run scripts/deploy.js --network hardhat",
+    "node":     "hardhat node",
+    "verify":   "hardhat verify --network mumbai"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.0"
+  }
+}

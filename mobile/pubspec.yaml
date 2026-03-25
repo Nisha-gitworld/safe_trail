@@ -1,0 +1,69 @@
+name: safetrail
+description: Smart Tourist Safety Monitoring System
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Maps & Location
+  google_maps_flutter: ^2.6.0
+  geolocator: ^11.0.0
+  flutter_background_geolocation: ^4.13.0
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.4
+
+  # HTTP & API
+  dio: ^5.4.3
+  retrofit: ^4.1.0
+
+  # Local Storage
+  sqflite: ^2.3.2
+  shared_preferences: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Blockchain
+  web3dart: ^2.7.3
+  wallet_connect_dart: ^0.0.2
+
+  # Audio (Voice SOS)
+  record: ^5.1.0
+  permission_handler: ^11.3.1
+
+  # UI
+  cupertino_icons: ^1.0.6
+  flutter_animate: ^4.5.0
+  lottie: ^3.1.0
+  shimmer: ^3.0.0
+
+  # Notifications
+  firebase_core: ^2.30.1
+  firebase_messaging: ^14.9.1
+  flutter_local_notifications: ^17.1.2
+
+  # Utils
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
+  qr_flutter: ^4.1.0
+  image_picker: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.9
+  riverpod_generator: ^2.3.9
+  retrofit_generator: ^8.1.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/animations/
+    - assets/icons/

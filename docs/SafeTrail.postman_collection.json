@@ -1,0 +1,194 @@
+{
+  "info": {
+    "name": "SafeTrail API",
+    "description": "Complete API collection for SafeTrail — Smart Tourist Safety System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api" },
+    { "key": "token",    "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"tourist@example.com\",\"password\":\"pass12345\",\"full_name\":\"Demo Tourist\",\"nationality\":\"Indian\",\"blood_type\":\"O+\",\"allergies\":\"None\"}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": ["const r = pm.response.json();", "pm.collectionVariables.set('token', r.access_token);"]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"tourist@example.com\",\"password\":\"pass12345\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Risk AI",
+      "item": [
+        {
+          "name": "Safe Zone Score",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/risk/score",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"lat\":18.944,\"lng\":72.823,\"speed\":1.5,\"dwell_time\":60,\"hour\":14,\"crowd_density\":0.2,\"user_id\":\"me\"}" }
+          }
+        },
+        {
+          "name": "Danger Zone Score",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/risk/score",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"lat\":19.040,\"lng\":72.855,\"speed\":0.1,\"dwell_time\":720,\"hour\":23,\"crowd_density\":0.88,\"user_id\":\"me\"}" }
+          }
+        },
+        {
+          "name": "Get Heatmap (Mumbai)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/heatmap/MUM",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Geofence",
+      "item": [
+        {
+          "name": "Check Zone",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/geofence/check",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"lat\":19.042,\"lng\":72.851,\"user_id\":\"me\"}" }
+          }
+        },
+        {
+          "name": "List Zones",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/geofence/zones?city=MUM",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Incident & SOS",
+      "item": [
+        {
+          "name": "Classify Incident",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/incident/classify",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"text\":\"I was robbed near the train station\"}" }
+          }
+        },
+        {
+          "name": "Trigger SOS",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/incident/sos",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"user_id\":\"me\",\"lat\":19.045,\"lng\":72.856,\"incident_type\":\"THEFT\",\"description\":\"Wallet stolen at market\"}" }
+          }
+        },
+        {
+          "name": "List My Incidents",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/incident/list?status=open",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Digital Identity",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/identity/profile",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Register DID",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/identity/register",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"user_id\":\"me\",\"ipfs_cid\":\"QmExampleCID123\",\"data_hash\":\"abc123\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Buddy System",
+      "item": [
+        {
+          "name": "Create Group",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/buddy/groups",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"group_name\":\"Heritage Tour\",\"city\":\"MUM\"}" }
+          }
+        },
+        {
+          "name": "Check In",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/buddy/checkin",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
