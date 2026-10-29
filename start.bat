@@ -13,18 +13,31 @@ if not exist .env (
 )
 
 REM Start databases
-echo [1/4] Starting Docker databases...
-docker-compose up -d postgres mongodb redis
-timeout /t 3 /nobreak >nul
+echo [1/4] Checking Docker databases...
+docker ps >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    docker-compose up -d postgres mongodb redis
+    timeout /t 2 /nobreak >nul
+) else (
+    echo [INFO] Docker is not running. Starting SafeTrail in standalone demo mode...
+)
 
 REM Backend
 echo [2/4] Starting FastAPI backend...
 cd backend
 if not exist venv (
-    python -m venv venv
+    if exist ..\.venv (
+        mklink /J venv ..\.venv >nul 2>&1
+    ) else (
+        python -m venv venv
+    )
 )
 call venv\Scripts\activate
-pip install -r requirements.txt -q
+python -c "import fastapi" >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo Installing backend dependencies...
+    pip install fastapi uvicorn pydantic pydantic-settings python-dotenv asyncpg sqlalchemy motor redis python-jose passlib python-multipart httpx websockets numpy
+)
 
 REM Train models if needed
 if not exist models\artifacts\xgb_risk.pkl (

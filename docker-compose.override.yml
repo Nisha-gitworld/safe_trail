@@ -1,0 +1,12 @@
+services:
+  postgres:
+    ports: !override
+      - "15432:5432"
+
+  mongodb:
+    ports: !override
+      - "27018:27017"
+
+  redis:
+    ports: !override
+      - "6380:6379"

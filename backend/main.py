@@ -13,10 +13,14 @@ from config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_db()
-    print("✅ SafeTrail backend started")
+    try:
+        await init_db()
+        print("SafeTrail database initialized")
+    except Exception as exc:
+        print(f"SafeTrail database unavailable, starting API in demo mode: {exc}")
+    print("SafeTrail backend started")
     yield
-    print("🛑 SafeTrail backend shutting down")
+    print("SafeTrail backend shutting down")
 
 
 app = FastAPI(

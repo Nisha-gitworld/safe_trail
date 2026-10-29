@@ -10,8 +10,10 @@ dist/
 build/
 .pytest_cache/
 .mypy_cache/
-models/artifacts/*.pkl
-models/artifacts/*.csv
+**/models/artifacts/*.pkl
+**/models/artifacts/*.csv
+**/venv/
+**/.venv/
 
 # Node / Blockchain
 node_modules/

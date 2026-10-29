@@ -85,6 +85,6 @@ if __name__ == "__main__":
     t1 = threading.Thread(target=run_police,  daemon=True)
     t2 = threading.Thread(target=run_hospital, daemon=True)
     t1.start(); t2.start()
-    print("✅ Mock Police  API → http://localhost:9001")
-    print("✅ Mock Hospital API → http://localhost:9002")
+    print("Mock Police API running at http://localhost:9001")
+    print("Mock Hospital API running at http://localhost:9002")
     t1.join(); t2.join()
