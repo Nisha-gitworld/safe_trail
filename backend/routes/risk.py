@@ -61,6 +61,47 @@ async def get_live_weather_route(
     return await fetch_live_weather(lat, lng)
 
 
+@router.get("/auto-location")
+async def auto_detect_location():
+    """
+    GET /api/risk/auto-location
+    Auto-detects the client's current city and coordinates via IP geolocation.
+    """
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=3.5) as client:
+            resp = await client.get("http://ip-api.com/json/")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("status") == "success":
+                    city = data.get("city", "Local Area")
+                    region = data.get("regionName", "")
+                    country = data.get("country", "")
+                    display_name = f"{city}, {region}" if region else city
+                    return {
+                        "name": display_name,
+                        "city": city,
+                        "region": region,
+                        "country": country,
+                        "lat": float(data.get("lat")),
+                        "lng": float(data.get("lon")),
+                        "detected": True,
+                    }
+    except Exception:
+        pass
+
+    return {
+        "name": "Bhubaneswar, Odisha",
+        "city": "Bhubaneswar",
+        "region": "Odisha",
+        "country": "India",
+        "lat": 20.2706,
+        "lng": 85.8334,
+        "detected": False,
+    }
+
+
+
 
 @router.get("/heatmap")
 async def get_heatmap(

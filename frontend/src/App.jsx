@@ -7,6 +7,7 @@ import {
 const API_BASE = 'http://localhost:8000/api';
 
 const PRESET_LOCATIONS = [
+  { name: 'Bhubaneswar (Odisha)', lat: 20.2706, lng: 85.8334 },
   { name: 'Mumbai (Central)', lat: 19.076, lng: 72.877 },
   { name: 'Delhi (Connaught Place)', lat: 28.632, lng: 77.219 },
   { name: 'Bengaluru (Koramangala)', lat: 12.935, lng: 77.624 },
@@ -84,14 +85,36 @@ function BadgeType({ type }) {
 export default function App() {
   const [activeIncidents] = useState(mockIncidents);
   const [location, setLocation] = useState(PRESET_LOCATIONS[0]);
-  const [customLat, setCustomLat] = useState('19.076');
-  const [customLng, setCustomLng] = useState('72.877');
+  const [customLat, setCustomLat] = useState('20.2706');
+  const [customLng, setCustomLng] = useState('85.8334');
   const [locationStatus, setLocationStatus] = useState('');
 
   const [liveAssessment, setLiveAssessment] = useState(null);
   const [liveWeather, setLiveWeather] = useState(null);
   const [nearbyServices, setNearbyServices] = useState([]);
   const [loadingFeeds, setLoadingFeeds] = useState(true);
+
+  // Auto-detect user's city via IP on initial load
+  useEffect(() => {
+    fetch(`${API_BASE}/risk/auto-location`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.lat && data.lng) {
+          setLocation({
+            name: data.name || `${data.city}, ${data.region}`,
+            lat: data.lat,
+            lng: data.lng,
+          });
+          setCustomLat(data.lat.toString());
+          setCustomLng(data.lng.toString());
+          if (data.detected) {
+            setLocationStatus(`📍 Detected your local area: ${data.name}`);
+            setTimeout(() => setLocationStatus(''), 4000);
+          }
+        }
+      })
+      .catch(err => console.log('Auto-location error:', err));
+  }, []);
 
   // Fetch real-time feeds whenever location changes
   useEffect(() => {
@@ -284,8 +307,8 @@ export default function App() {
           />
           <StatCard
             label="Live Weather"
-            value={liveWeather ? `${liveWeather.temperature_c}°C` : '29°C'}
-            sub={liveWeather ? `${liveWeather.hazard_description} · ${liveWeather.wind_speed_kmh} km/h wind` : 'Open-Meteo Feed'}
+            value={liveWeather ? `${liveWeather.temperature_c}°C` : '--'}
+            sub={liveWeather ? `${liveWeather.condition} · ${liveWeather.humidity_pct}% humidity` : 'Open-Meteo Real-Time API'}
             color="#2979FF"
           />
           <StatCard
@@ -360,26 +383,26 @@ export default function App() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginTop: 10 }}>
               <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, color: '#64748b' }}>Current Condition</div>
+                <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
+                  {liveWeather?.condition ?? 'Clear Sky'}
+                </div>
+              </div>
+              <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
                 <div style={{ fontSize: 12, color: '#64748b' }}>Heat Index / Feels Like</div>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
                   {liveWeather?.feels_like_c ?? '--'}°C
                 </div>
               </div>
               <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
                 <div style={{ fontSize: 12, color: '#64748b' }}>Relative Humidity</div>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
                   {liveWeather?.humidity_pct ?? '--'}%
                 </div>
               </div>
               <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#64748b' }}>Rainfall Rate</div>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
-                  {liveWeather?.rain_mm ?? 0} mm/h
-                </div>
-              </div>
-              <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
                 <div style={{ fontSize: 12, color: '#64748b' }}>Wind & Gusts</div>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
                   {liveWeather?.wind_speed_kmh ?? '--'} km/h
                 </div>
               </div>
