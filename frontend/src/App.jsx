@@ -6,7 +6,17 @@ import {
 
 const API_BASE = 'http://localhost:8000/api';
 
-// ── Mock data (for historical charts) ──────────────────────────────────────────
+const PRESET_LOCATIONS = [
+  { name: 'Mumbai (Central)', lat: 19.076, lng: 72.877 },
+  { name: 'Delhi (Connaught Place)', lat: 28.632, lng: 77.219 },
+  { name: 'Bengaluru (Koramangala)', lat: 12.935, lng: 77.624 },
+  { name: 'Goa (Panaji)', lat: 15.498, lng: 73.827 },
+  { name: 'Kolkata (Park Street)', lat: 22.553, lng: 88.351 },
+  { name: 'London (Westminster)', lat: 51.500, lng: -0.124 },
+  { name: 'New York (Times Square)', lat: 40.758, lng: -73.985 },
+];
+
+// ── Mock data (for historical reference) ──────────────────────────────────────
 const mockRiskTrend = [
   { time: '00:00', score: 22 }, { time: '03:00', score: 45 },
   { time: '06:00', score: 18 }, { time: '09:00', score: 31 },
@@ -73,19 +83,25 @@ function BadgeType({ type }) {
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function App() {
   const [activeIncidents] = useState(mockIncidents);
+  const [location, setLocation] = useState(PRESET_LOCATIONS[0]);
+  const [customLat, setCustomLat] = useState('19.076');
+  const [customLng, setCustomLng] = useState('72.877');
+  const [locationStatus, setLocationStatus] = useState('');
+
   const [liveAssessment, setLiveAssessment] = useState(null);
   const [liveWeather, setLiveWeather] = useState(null);
   const [nearbyServices, setNearbyServices] = useState([]);
   const [loadingFeeds, setLoadingFeeds] = useState(true);
 
-  // Fetch real-time feeds
+  // Fetch real-time feeds whenever location changes
   useEffect(() => {
     async function fetchRealTimeData() {
+      setLoadingFeeds(true);
       try {
         const [assessRes, weatherRes, servicesRes] = await Promise.all([
-          fetch(`${API_BASE}/risk/live-assessment?lat=19.076&lng=72.877`),
-          fetch(`${API_BASE}/risk/weather?lat=19.076&lng=72.877`),
-          fetch(`${API_BASE}/incident/nearby-services?lat=19.076&lng=72.877&radius=3500`),
+          fetch(`${API_BASE}/risk/live-assessment?lat=${location.lat}&lng=${location.lng}`),
+          fetch(`${API_BASE}/risk/weather?lat=${location.lat}&lng=${location.lng}`),
+          fetch(`${API_BASE}/incident/nearby-services?lat=${location.lat}&lng=${location.lng}&radius=3500`),
         ]);
 
         if (assessRes.ok) setLiveAssessment(await assessRes.json());
@@ -102,9 +118,68 @@ export default function App() {
     }
 
     fetchRealTimeData();
-    const interval = setInterval(fetchRealTimeData, 15000); // Poll live telemetry every 15s
+    const interval = setInterval(fetchRealTimeData, 15000); // Polling every 15s
     return () => clearInterval(interval);
-  }, []);
+  }, [location.lat, location.lng]);
+
+  // Use browser GPS
+  const handleUseDeviceLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocationStatus('Requesting browser GPS permission...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(4));
+        const lng = parseFloat(pos.coords.longitude.toFixed(4));
+        setLocation({
+          name: 'My Device GPS Location',
+          lat,
+          lng,
+        });
+        setCustomLat(lat.toString());
+        setCustomLng(lng.toString());
+        setLocationStatus('GPS location acquired!');
+        setTimeout(() => setLocationStatus(''), 4000);
+      },
+      (err) => {
+        setLocationStatus(`Could not get GPS: ${err.message}`);
+        setTimeout(() => setLocationStatus(''), 5000);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  // Change via city dropdown
+  const handlePresetChange = (e) => {
+    const selected = PRESET_LOCATIONS.find(p => p.name === e.target.value);
+    if (selected) {
+      setLocation(selected);
+      setCustomLat(selected.lat.toString());
+      setCustomLng(selected.lng.toString());
+      setLocationStatus(`Switched to ${selected.name}`);
+      setTimeout(() => setLocationStatus(''), 3000);
+    }
+  };
+
+  // Change via manual coordinates
+  const handleApplyCoordinates = (e) => {
+    e.preventDefault();
+    const lat = parseFloat(customLat);
+    const lng = parseFloat(customLng);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setLocationStatus('Please enter valid latitude (-90 to 90) and longitude (-180 to 180).');
+      return;
+    }
+    setLocation({
+      name: `Custom (${lat.toFixed(3)}°, ${lng.toFixed(3)}°)`,
+      lat,
+      lng,
+    });
+    setLocationStatus('Coordinates updated!');
+    setTimeout(() => setLocationStatus(''), 3000);
+  };
 
   const score = liveAssessment ? liveAssessment.danger_score : 28;
   const scoreColor = score < 40 ? '#639922' : score < 70 ? '#BA7517' : '#E24B4A';
@@ -112,17 +187,90 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f5f4f0', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ background: '#534AB7', padding: '14px 28px', display: 'flex',
-        alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{
+        background: '#534AB7', padding: '14px 28px', display: 'flex',
+        alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
+      }}>
         <div style={{ color: 'white', fontWeight: 700, fontSize: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span>🛡️ SafeTrail — Live Safety Platform</span>
           <span style={{ fontSize: 11, background: '#2E7D32', color: 'white', padding: '2px 8px', borderRadius: 12 }}>
             REAL-TIME FEEDS ACTIVE
           </span>
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
-          Mumbai (19.076°N, 72.877°E) · Updated: {new Date().toLocaleTimeString()}
+        <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 600 }}>{location.name}</span>
+          <span>({location.lat.toFixed(4)}°N, {location.lng.toFixed(4)}°E)</span>
         </div>
+      </div>
+
+      {/* Location Control Bar */}
+      <div style={{
+        background: 'white', borderBottom: '1px solid #e2e8f0', padding: '12px 28px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
+      }}>
+        {/* Left: Device GPS & City Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <button
+            onClick={handleUseDeviceLocation}
+            style={{
+              background: '#2E7D32', color: 'white', border: 'none', borderRadius: 8,
+              padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            <span>📍 Use My Device Location</span>
+          </button>
+
+          <span style={{ color: '#aaa', fontSize: 13 }}>or select preset:</span>
+
+          <select
+            value={PRESET_LOCATIONS.some(p => p.name === location.name) ? location.name : ''}
+            onChange={handlePresetChange}
+            style={{
+              padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1',
+              fontSize: 13, background: '#f8fafc', color: '#1e293b', cursor: 'pointer',
+            }}
+          >
+            <option value="" disabled>Choose City...</option>
+            {PRESET_LOCATIONS.map(p => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Right: Manual Lat / Lng inputs */}
+        <form onSubmit={handleApplyCoordinates} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Custom GPS:</span>
+          <input
+            type="text"
+            placeholder="Latitude"
+            value={customLat}
+            onChange={(e) => setCustomLat(e.target.value)}
+            style={{ width: 85, padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+          />
+          <input
+            type="text"
+            placeholder="Longitude"
+            value={customLng}
+            onChange={(e) => setCustomLng(e.target.value)}
+            style={{ width: 85, padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+          />
+          <button
+            type="submit"
+            style={{
+              background: '#534AB7', color: 'white', border: 'none', borderRadius: 6,
+              padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}
+          >
+            Set Location
+          </button>
+        </form>
+
+        {locationStatus && (
+          <div style={{ width: '100%', fontSize: 12, color: '#1e293b', background: '#f1f5f9', padding: '4px 10px', borderRadius: 6 }}>
+            ℹ️ {locationStatus}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: 28 }}>
@@ -142,17 +290,17 @@ export default function App() {
           />
           <StatCard
             label="Nearest Police Station"
-            value={liveAssessment?.nearest_police ? liveAssessment.nearest_police.split('(')[0].trim() : 'Bail Bazar PS'}
-            sub={liveAssessment?.nearest_police ? liveAssessment.nearest_police.match(/\((.*?)\)/)?.[1] || 'nearby' : 'from OpenStreetMap'}
+            value={liveAssessment?.nearest_police ? liveAssessment.nearest_police.split('(')[0].trim() : (nearbyServices.find(s => s.type === 'police')?.name || 'Scanning...')}
+            sub={liveAssessment?.nearest_police ? (liveAssessment.nearest_police.match(/\((.*?)\)/)?.[1] || 'nearby') : 'from OpenStreetMap'}
             color="#534AB7"
           />
           <StatCard
             label="Nearest Hospital"
-            value={liveAssessment?.nearest_medical ? liveAssessment.nearest_medical.split('(')[0].trim() : 'Maa Hospital'}
-            sub={liveAssessment?.nearest_medical ? liveAssessment.nearest_medical.match(/\((.*?)\)/)?.[1] || 'nearby' : 'from OpenStreetMap'}
+            value={liveAssessment?.nearest_medical ? liveAssessment.nearest_medical.split('(')[0].trim() : (nearbyServices.find(s => s.type === 'hospital')?.name || 'Scanning...')}
+            sub={liveAssessment?.nearest_medical ? (liveAssessment.nearest_medical.match(/\((.*?)\)/)?.[1] || 'nearby') : 'from OpenStreetMap'}
             color="#1D9E75"
           />
-          <StatCard label="Active Tourists" value="1,284" sub="streaming live GPS" color="#E65100" />
+          <StatCard label="Active Area Tourists" value="1,284" sub="streaming live GPS" color="#E65100" />
         </div>
 
         {/* Real-time Infrastructure & Weather Radar */}
@@ -166,12 +314,14 @@ export default function App() {
               </span>
             </div>
             {loadingFeeds ? (
-              <div style={{ color: '#888', fontSize: 13, padding: 20 }}>Scanning OpenStreetMap POIs...</div>
+              <div style={{ color: '#888', fontSize: 13, padding: 20 }}>Scanning OpenStreetMap POIs for this location...</div>
             ) : nearbyServices.length === 0 ? (
-              <div style={{ color: '#888', fontSize: 13 }}>No emergency stations in perimeter.</div>
+              <div style={{ color: '#888', fontSize: 13, padding: 20 }}>
+                No registered police stations or hospitals found within 3.5 km of these coordinates.
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 240, overflowY: 'auto' }}>
-                {nearbyServices.slice(0, 5).map((srv, idx) => (
+                {nearbyServices.slice(0, 6).map((srv, idx) => (
                   <div key={idx} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '8px 12px', background: '#fbfbfb', borderRadius: 8, border: '1px solid #f0f0f0',
