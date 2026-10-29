@@ -46,6 +46,9 @@ class RiskResponse(BaseModel):
     zone_type:      str     # safe | caution | danger
     alert_level:    int     # 0=none, 1=push, 2=SMS, 3=SOS
     recommendation: str
+    weather_hazard: Optional[str] = None
+    nearest_police: Optional[str] = None
+    nearest_medical:Optional[str] = None
     timestamp:      datetime = Field(default_factory=datetime.utcnow)
 
 

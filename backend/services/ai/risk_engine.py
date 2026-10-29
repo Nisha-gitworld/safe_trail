@@ -111,3 +111,87 @@ def predict_risk(feat: LocationFeature) -> RiskResponse:
         alert_level=alert_level,
         recommendation=rec,
     )
+
+
+async def predict_risk_live(feat: LocationFeature) -> RiskResponse:
+    """
+    Live prediction pipeline incorporating real-time telemetry:
+    • Live weather hazards from Open-Meteo
+    • Real nearby police & hospital infrastructure from OpenStreetMap
+    • Adaptive distance-based risk scoring
+    """
+    import asyncio
+    from services.external.weather_service import fetch_live_weather
+    from services.external.osm_service import fetch_nearby_emergency_services
+
+    # Base score
+    base_res = predict_risk(feat)
+    danger_score = base_res.danger_score
+
+    # Fetch live feeds concurrently
+    weather_task = fetch_live_weather(feat.lat, feat.lng)
+    osm_task = fetch_nearby_emergency_services(feat.lat, feat.lng, radius_meters=3000)
+
+    weather_data, osm_data = await asyncio.gather(weather_task, osm_task, return_exceptions=True)
+
+    weather_hazard = None
+    nearest_police_str = None
+    nearest_med_str = None
+    recs = [base_res.recommendation]
+
+    # Process weather adjustments
+    if isinstance(weather_data, dict):
+        if weather_data.get("hazard_level") in ("caution", "danger"):
+            penalty_pts = weather_data.get("risk_penalty", 0.0) * 100
+            danger_score += penalty_pts
+            weather_hazard = weather_data.get("hazard_description")
+            recs.append(f"Weather alert: {weather_hazard}.")
+
+    # Process OpenStreetMap emergency infrastructure
+    if isinstance(osm_data, dict):
+        nearest_pol = osm_data.get("nearest_police")
+        nearest_med = osm_data.get("nearest_medical")
+
+        if nearest_pol:
+            dist_p = nearest_pol["distance_meters"]
+            nearest_police_str = f"{nearest_pol['name']} ({dist_p}m)"
+            if dist_p < 400:
+                danger_score -= 12  # Safety boost near police station
+        else:
+            danger_score += 10  # Isolated from police coverage
+
+        if nearest_med:
+            dist_m = nearest_med["distance_meters"]
+            nearest_med_str = f"{nearest_med['name']} ({dist_m}m)"
+            if dist_m < 400:
+                danger_score -= 8   # Quick medical access buffer
+        else:
+            danger_score += 5
+
+        if osm_data.get("is_isolated"):
+            danger_score += 15
+            recs.append("Isolated area: No emergency services within 3 km.")
+
+    # Clamp final score
+    danger_score = round(max(5.0, min(99.0, danger_score)), 2)
+
+    if danger_score < 40:
+        zone_type = "safe"
+        alert_level = 0
+    elif danger_score < 70:
+        zone_type = "caution"
+        alert_level = 1
+    else:
+        zone_type = "danger"
+        alert_level = 2
+
+    return RiskResponse(
+        danger_score=danger_score,
+        zone_type=zone_type,
+        alert_level=alert_level,
+        recommendation=" ".join(recs),
+        weather_hazard=weather_hazard,
+        nearest_police=nearest_police_str,
+        nearest_medical=nearest_med_str,
+    )
+

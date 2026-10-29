@@ -76,3 +76,18 @@ async def list_incidents(
 
     incidents = await cursor.to_list(length=20)
     return {"incidents": incidents, "count": len(incidents)}
+
+
+@router.get("/nearby-services")
+async def get_nearby_emergency_services(
+    lat: float,
+    lng: float,
+    radius: int = 3000,
+):
+    """
+    GET /api/incident/nearby-services?lat=19.076&lng=72.877&radius=3000
+    Fetches real police stations, hospitals, and clinics from OpenStreetMap.
+    """
+    from services.external.osm_service import fetch_nearby_emergency_services
+    return await fetch_nearby_emergency_services(lat, lng, radius_meters=radius)
+
